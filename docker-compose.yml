@@ -1,0 +1,38 @@
+version: '3'
+services:
+  database:
+    container_name: Database
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    networks:
+      - appnet
+    ports:
+      - ${DB_SERVER_PORT}:5432
+    restart: unless-stopped
+  backend:
+    container_name: NodeJS
+    build:
+      context: .
+      dockerfile: docker/adonisjs/Dockerfile
+      target: ${BACKEND_DOCKER_TARGET}
+    volumes: 
+      - ./source:/home/node/app
+    networks:
+      - appnet
+    ports:
+      - ${BACKEND_SERVER_PORT}:3333
+    depends_on: 
+      - database
+    links:
+      - database
+    restart: unless-stopped
+volumes:
+    db_data:
+networks:
+  appnet:
+    driver: bridge
